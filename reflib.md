@@ -25,7 +25,7 @@ The Reference Library is a documentation library for developers that outlines th
 
 # Third Party Systems
 ## Third Party JavaScript
-Third Party JavaScript are scripts that can be embedded into any site directly for a third party vendor. These scripts can include ads, analytics, widgets, and other scripts that make the web more dynamic and interactive. Since these scripts are created and/or hosted by a third party, the third party can be compromised and affect the site with the embedded JavaScript. Risks include loss of control over changes to the client application, execution of arbitrary code on client systems, and the disclosure or leakage of sensitive information. 
+Third Party JavaScript are scripts that can be embedded into any site directly for a third party vendor. These scripts can include ads, analytics, widgets, and other scripts that make the web more dynamic and interactive. Since these scripts are created and/or hosted by a third party, the third party can be compromised and affect the site with the embedded JavaScript. See [this article](https://www.csoonline.com/article/3400381/what-is-magecart-how-this-hacker-group-steals-payment-card-data.html) on these types of attacks for more information. Risks include loss of control over changes to the client application, execution of arbitrary code on client systems, and the disclosure or leakage of sensitive information. 
 
 ### Best Practices
 
@@ -34,36 +34,24 @@ Review the JavaScript
 * Avoid document.write()
 * Avoid scripts that pollute the global scope
 * Keep JavaScript libraries updated
-
+    
 Beyond reviewing the JavaScript code for vulnerabilities, there are multiple ways to securely implement Third Party JavaScript
 
-1. Self Host Third Party JavaScript
+1. Sandboxing with iFrame
 
-    Instead of using JavaScript that is hosted by a third party, one can self host the JavaScript and review the code. Updates to the script would need to be manually changed and features may be limited. 
-
-    Example:
-    ```selfhost
-    <img src="http://example.com/tracking?data=DATA" width="0" height="0">
-    ```
-
-2. Sandboxing with iFrame
-
-    Third party scripts can be loaded directly into an iframe from a different domain. It will work as a "jail" and vendor JavaScript will not have direct access to the host page DOM and cookies. The host main page and sandbox iframe can communicate between each other via the postMessage mechanism. An iframe from a different origin with the sandbox attribute will be restricted from accessing information on the main page and has certain features restricted. 
+    Third party scripts that do not need a high degree of access to the parent window can be loaded directly into an iframe from a different domain. It will work as a "jail" and vendor JavaScript will not have direct access to the host page DOM and cookies. The host main page and sandbox iframe can communicate between each other via the postMessage mechanism. An iframe from a different origin with the sandbox attribute will be restricted from accessing information on the main page and has certain features restricted. 
 
     Example: 
     ```sandbox
     <iframe sandbox="allow-scripts allow-same-origin" src="//js.onemedical.io/external"> 
     ```
 
-3. Tag Manager
+2. Self Host Third Party JavaScript
+   When a tighter degree of integration into the application is required, consider hosting JavaScript resources from a source One Medical controls. 3rd party scripts can be bundled into the application or hosted from an S3 bucket to reduce the risks of attackers modifying the source. 
 
-    An indirect request to the vendor can be made through a tag manager. A few lines of code on the host page will request a javascript file or url from a tag manager site, not from the javascript vendor site. The tag manager site returns the third party javascript files that the host company has configured to be returned. The content returned by the tag manager can be dynamically changed by a host site employee, such as a member of the marketing team. 
-
-    The tag manager can be vulnerable because the tag manager interface can be used to generate code to get unvalidated data from the DOM (e.g. URL parameters) and store it in some page location that would execute javascript. 
-
-    If using a tag manager, limit DOM data to the host defined data layer. The data layer should either be (1) a DIV object with attribute values that have the marketing or user behavior data that the 3rd party wants or (2) a set of JSON objects with the same data. Each variable or attribute contains the value of some DOM elements or the description of a user action. The data layer is the complete set of values that all vendors need for that page. The data layer is created by the host developers.
-
-    Javascript files can be changed on the vendor site and any call from the browser will get the changed JavaScript. One way to manage this risk is with the subresource integrity, which will ensure that only the code that has been reviewed is executed. The developer generates integrity metadata for the vendor javascript, and adds it to the script element.
+3. Subresource Integrity
+   
+   If self hosting is not an option, consider implementing script tags with subresource integrity. Javascript files can be changed on the vendor site and any call from the browser will get the changed JavaScript. One way to manage this risk is with the subresource integrity, which will ensure that only the code that has been reviewed is executed. The developer generates integrity metadata for the vendor javascript, and adds it to the script element.
 
     Example: 
     ```subresource
